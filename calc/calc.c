@@ -7,53 +7,44 @@
 #include <sys/wait.h>
 #include <string.h>
 
-//функция с операциями 
-float operations(float x, float y, char operation)
+//функция с операциями
+double operations(double x, double y, char operation)
 {
-  float res;
-  switch (operation) {
-  case '+': {
+  double res;
+  switch (operation)
+  {
+  case '+':
+  {
     res = x + y;
     break;
   }
-  case '-': {
+  case '-':
+  {
     res = x - y;
     break;
   }
-  case '/': {
+  case '/':
+  {
     if (y != 0)
       res = x / y;
     else
       res = 0;
     break;
   }
-  case '*': {
+  case '*':
+  {
     res = x * y;
-    break;
-  }
-  case '^': {
-    res = 1;
-    for (int i = 0; i < y; i++)
-      res = res * x; 
-    break;
-  }
-  case '!': {
-    res = 1;
-    if (y >= 0)
-      for (int i = y; i != 1; i--)
-        res = res * i;
-    else
-      res = 0;
     break;
   }
   }
   return res;
 }
 
-struct message{
+struct message
+{
   long mtype;
-  float x, y;
-  char oper;
+  double x, y;
+  char operation;
 };
 
 int main(void)
@@ -63,16 +54,16 @@ int main(void)
   if (msqid == -1)
   {
     perror("msgget");
-
     return EXIT_FAILURE;
   }
-//создание процесса
+  //создание процесса
   pid_t pid = fork();
   if (pid == 0)
   {
-    float x, y;
-    char oper
+    double x, y;
+    char operation;
     struct msg msg;
+
     msg.mtype = 23;
     memset(&(msg.x), 0, sizeof(double));
     memset(&(msg.y), 0, sizeof(double));
@@ -86,29 +77,27 @@ int main(void)
 
     printf("Operation: ");
     scanf(" %c", &oper);
-    (void)strcpy(&(msg.oper), &oper);
+    (void)strcpy(&(msg.operation), &operation);
 
-//отправка
+    //отправка
     if (msgsnd(msqid, &msg, sizeof(struct msg), 0) == -1)
     {
       perror("msgsnd");
-
       return EXIT_FAILURE;
     }
   }
   else
   {
     (void)waitpid(pid, NULL, 0);
-    //получаем сообщение из очереди 
+    //получаем сообщение из очереди
     struct msg msg;
     if (msgrcv(msqid, &msg, sizeof(struct msg), 0, 0) == -1)
     {
       perror("msgrcv");
-
       return EXIT_FAILURE;
     }
 
-    printf("%.2lf %c %.2lf = %.2lf\n", msg.x, msg.oper, msg.y, operations(msg.x, msg.y, msg.oper));
+    printf("%.2lf %c %.2lf = %.2lf\n", msg.x, msg.operation, msg.y, operations(msg.x, msg.y, msg.operation));
     if (msgctl(msqid, IPC_RMID, NULL) == -1)
     {
       perror("msgctl");
